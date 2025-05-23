@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Tools</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: #2a2a2a;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #c0392b;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+        
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .tool-card {
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 20px;
+            background: #333;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .tool-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.7);
+            background: #3a3a3a;
+            border-color: #c0392b;
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .tool-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #c0392b;
+        }
+        
+        .tool-description {
+            color: #ccc;
+            line-height: 1.5;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #444;
+            color: #888;
+            font-size: 14px;
+        }
+        
+        .footer a {
+            color: #c0392b;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>LLM Tools</h1>
+        <p class="subtitle">Simple tools written entirely by LLMs</p>
+        
+        <div class="tools-grid">
+            <a href="tool/vid2gif.html" class="tool-card">
+                <div class="tool-title">/vid2gif</div>
+                <div class="tool-description">
+                    Convert video files to animated GIFs with cropping, scaling, and frame rate controls. 
+                    Supports MP4, MOV, AVI, MKV, and WEBM formats.
+                </div>
+            </a>
+        </div>
+        
+        <div class="footer">
+            made with ❤️ by <a href="https://github.com/nuwandavek" target="_blank">nuwandavek</a>
+        </div>
+    </div>
+</body>
+</html>
