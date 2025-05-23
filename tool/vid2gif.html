@@ -258,7 +258,7 @@
             <div class="control-group">
                 <label>Scale (0.1 - 2.0):</label>
                 <input type="range" id="scale" min="0.1" max="2.0" step="0.1" value="0.5">
-                <span id="scaleValue">1.0</span>
+                <span id="scaleValue">0.5</span>
             </div>
             <div class="control-group">
                 <label>FPS (1-15):</label>
@@ -424,13 +424,15 @@
             canvas.height = canvasHeight;
 
             // Initialize GIF encoder
+            console.log('Initializing GIF encoder with dimensions:', canvasWidth, 'x', canvasHeight);
+            console.log('Worker script path:', '../helpers/gif.worker.js');
             showStatus('Initializing GIF encoder...', 'loading');
             const gif = new GIF({
                 workers: 2,
                 quality: 10,
                 width: canvasWidth,
                 height: canvasHeight,
-                workerScript: '/helpers/gif.worker.js'
+                workerScript: '../helpers/gif.worker.js'
             });
 
             // Calculate frame extraction
@@ -438,6 +440,8 @@
             const frameCount = Math.round(videoDuration * targetFps);
             const frameInterval = videoDuration / frameCount;
 
+            console.log(`Video duration: ${video.duration}s, using: ${videoDuration}s`);
+            console.log(`Extracting ${frameCount} frames at ${targetFps} FPS`);
             showStatus(`Extracting ${frameCount} frames...`, 'loading');
 
             // Extract frames
@@ -476,14 +480,34 @@
                 // Add frame to GIF
                 gif.addFrame(tempCanvas, { delay: 1000 / targetFps });
                 
-                updateProgress((i / frameCount) * 80); // 80% for frame extraction
+                // Update progress with frame counter
+                const frameProgress = (i / frameCount) * 80;
+                updateProgress(frameProgress);
+                showStatus(`Extracting frames... ${i + 1}/${frameCount}`, 'loading');
             }
 
             showStatus('Generating GIF...', 'loading');
             updateProgress(80);
 
-            // Render GIF
+            // Add error handling and progress tracking for GIF encoder
+            gif.on('error', (error) => {
+                console.error('GIF encoding error:', error);
+                showStatus(`GIF encoding failed: ${error.message}`, 'error');
+            });
+            
+            gif.on('progress', (progress) => {
+                const renderProgress = 80 + (progress * 20); // 80-100% for rendering
+                updateProgress(renderProgress);
+                showStatus(`Rendering GIF... ${Math.round(progress * 100)}%`, 'loading');
+            });
+            
+            // Render timeout warning
+            const renderTimeout = setTimeout(() => {
+                showStatus('GIF rendering is taking longer than expected... Please wait or try with smaller settings.', 'loading');
+            }, 30000); // 30 second warning
+            
             gif.on('finished', (blob) => {
+                clearTimeout(renderTimeout);
                 outputBlob = blob;
                 const url = URL.createObjectURL(blob);
                 
@@ -493,7 +517,13 @@
                 showStatus(`GIF created! Size: ${(blob.size / 1024 / 1024).toFixed(2)} MB`, 'success');
                 updateProgress(100);
             });
+            
+            gif.on('abort', () => {
+                clearTimeout(renderTimeout);
+                showStatus('GIF generation was aborted', 'error');
+            });
 
+            console.log('Starting GIF render with', frameCount, 'frames');
             gif.render();
         }
 
@@ -507,16 +537,20 @@
         });
 
         function showStatus(message, type) {
-            status.textContent = message;
+            // Clear any existing timeout
+            if (window.statusTimeout) {
+                clearTimeout(window.statusTimeout);
+            }
+            
             status.className = `status ${type}`;
             status.style.display = 'block';
             
             if (type === 'loading') {
                 status.innerHTML = `<span class="loader"></span>${message}`;
-            }
-            
-            if (type !== 'loading') {
-                setTimeout(() => {
+            } else {
+                status.textContent = message;
+                // Auto-hide success/error messages after 5 seconds
+                window.statusTimeout = setTimeout(() => {
                     status.style.display = 'none';
                 }, 5000);
             }
