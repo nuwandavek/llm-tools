@@ -6,7 +6,7 @@
 
 ## Motivation
 
-With llms, creating simple tools is trivial, super fun and should be a no-brainer. This repo is an honest, non-hypey experiment in pushing the usefulness boundary of vibe coding. All tools are 100% written by LLMs, with not a single line of manuall written code. The goal is for each tool to be completely private (run in your browser), have zero dependencies (pure HTML/CSS/JS), and ooze fun vibes.
+With llms, creating simple tools is trivial, super fun and should be a no-brainer. This repo is an honest, non-hypey experiment in pushing the usefulness boundary of vibe coding. All tools are 100% written by LLMs, with not a single line of manuall written code. The goal is for each tool to be completely private (run in your browser), have zero build steps (pure HTML/CSS/JS), and ooze fun vibes.
 
 ## Tools
 
