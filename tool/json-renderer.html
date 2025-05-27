@@ -41,7 +41,7 @@
         .container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            height: calc(100vh - 180px);
+            height: calc(100vh - 260px);
             gap: 1px;
             background: #333;
         }
@@ -52,6 +52,10 @@
             flex-direction: column;
         }
 
+        .output-panel {
+            position: relative;
+        }
+
         .panel-header {
             padding: 15px 20px;
             background: #2a2a2a;
@@ -59,6 +63,37 @@
             font-weight: 500;
             color: #ccc;
             border-bottom: 1px solid #333;
+        }
+
+        .copy-button {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #c0392b;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'JetBrains Mono', monospace;
+            box-shadow: 0 2px 8px rgba(192, 57, 43, 0.3);
+            z-index: 10;
+        }
+
+        .copy-button:hover {
+            background: #e74c3c;
+            transform: translateX(-50%) translateY(-1px);
+            box-shadow: 0 4px 12px rgba(192, 57, 43, 0.4);
+        }
+
+        .copy-button:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: translateX(-50%);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
         }
 
         .input-area {
@@ -88,6 +123,15 @@
         .output-area {
             flex: 1;
             padding: 20px;
+            overflow-y: auto;
+        }
+
+        #jsonOutput {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            height: 100%;
             overflow-y: auto;
         }
 
@@ -178,6 +222,25 @@
             margin-bottom: 8px;
         }
 
+        .error-input {
+            background: #2d1617;
+            border: 1px solid #f85149;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .error-highlight {
+            background: rgba(248, 81, 73, 0.3);
+            border-radius: 2px;
+        }
+
         .home-link {
             color: #888;
             text-decoration: none;
@@ -237,11 +300,12 @@
             </div>
         </div>
 
-        <div class="panel">
+        <div class="panel output-panel">
             <div class="panel-header">Rendered Output</div>
             <div class="output-area">
                 <div id="jsonOutput" class="json-tree"></div>
             </div>
+            <button id="copyButton" class="copy-button" disabled>Copy JSON</button>
         </div>
     </div>
 
@@ -252,7 +316,9 @@
     <script>
         const jsonInput = document.getElementById('jsonInput');
         const jsonOutput = document.getElementById('jsonOutput');
+        const copyButton = document.getElementById('copyButton');
         let debounceTimer;
+        let currentParsedJson = null;
 
         // Sample JSON to show on load
         const sampleJson = `{
@@ -284,6 +350,57 @@
         function getJsonLineNumber(jsonStr, position) {
             const lines = jsonStr.substring(0, position).split('\n');
             return lines.length;
+        }
+
+        function highlightErrorInInput(jsonStr, position) {
+            if (!position || position < 0) return escapeHtml(jsonStr);
+            
+            const before = jsonStr.substring(0, position);
+            const errorChar = jsonStr.charAt(position);
+            const after = jsonStr.substring(position + 1);
+            
+            return escapeHtml(before) + 
+                   '<span class="error-highlight">' + escapeHtml(errorChar || '?') + '</span>' + 
+                   escapeHtml(after);
+        }
+
+        async function copyToClipboard() {
+            if (!currentParsedJson) return;
+            
+            const formattedJson = JSON.stringify(currentParsedJson, null, 2);
+            
+            try {
+                // Try modern clipboard API first
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(formattedJson);
+                } else {
+                    // Fallback to legacy method
+                    const textArea = document.createElement('textarea');
+                    textArea.value = formattedJson;
+                    textArea.style.position = 'fixed';
+                    textArea.style.opacity = '0';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                }
+                
+                const originalText = copyButton.textContent;
+                copyButton.textContent = 'Copied!';
+                copyButton.style.background = '#56d364';
+                
+                setTimeout(() => {
+                    copyButton.textContent = originalText;
+                    copyButton.style.background = '#c0392b';
+                }, 1500);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+                copyButton.textContent = 'Failed';
+                setTimeout(() => {
+                    copyButton.textContent = 'Copy';
+                }, 1500);
+            }
         }
 
         function escapeHtml(text) {
@@ -331,11 +448,11 @@
                 html += '<span class="json-bracket">[</span>';
                 
                 if (shouldCollapse) {
-                    html += ` <span class="json-ellipsis">... ${value.length} items</span> `;
+                    html += ` <span class="json-ellipsis">... ${value.length} items</span> <span class="json-bracket">]</span>`;
+                    html += `<div id="${toggleId}" class="json-content ${contentHidden}">`;
+                } else {
+                    html += `<div id="${toggleId}" class="json-content ${contentHidden}">`;
                 }
-                
-                html += '<span class="json-bracket">]</span>';
-                html += `<div id="${toggleId}" class="json-content ${contentHidden}">`;
                 
                 value.forEach((item, index) => {
                     html += `<div style="margin-left: 20px;">`;
@@ -346,7 +463,9 @@
                     html += '</div>';
                 });
                 
-                html += `<div><span class="json-bracket">]</span></div>`;
+                if (!shouldCollapse) {
+                    html += `<div><span class="json-bracket">]</span></div>`;
+                }
                 html += '</div>';
                 
                 return html;
@@ -366,11 +485,11 @@
                 html += '<span class="json-bracket">{</span>';
                 
                 if (shouldCollapse) {
-                    html += ` <span class="json-ellipsis">... ${keys.length} keys</span> `;
+                    html += ` <span class="json-ellipsis">... ${keys.length} keys</span> <span class="json-bracket">}</span>`;
+                    html += `<div id="${toggleId}" class="json-content ${contentHidden}">`;
+                } else {
+                    html += `<div id="${toggleId}" class="json-content ${contentHidden}">`;
                 }
-                
-                html += '<span class="json-bracket">}</span>';
-                html += `<div id="${toggleId}" class="json-content ${contentHidden}">`;
                 
                 keys.forEach((k, index) => {
                     html += `<div style="margin-left: 20px;">`;
@@ -381,7 +500,9 @@
                     html += '</div>';
                 });
                 
-                html += `<div><span class="json-bracket">}</span></div>`;
+                if (!shouldCollapse) {
+                    html += `<div><span class="json-bracket">}</span></div>`;
+                }
                 html += '</div>';
                 
                 return html;
@@ -403,24 +524,39 @@
             
             if (!input) {
                 jsonOutput.innerHTML = '<div style="color: #656d76; font-style: italic;">Enter JSON to see it rendered here...</div>';
+                currentParsedJson = null;
+                copyButton.disabled = true;
                 return;
             }
             
             try {
                 const parsed = JSON.parse(input);
+                currentParsedJson = parsed;
                 jsonOutput.innerHTML = `<div class="json-tree">${renderJsonValue(parsed)}</div>`;
+                copyButton.disabled = false;
             } catch (error) {
+                currentParsedJson = null;
+                copyButton.disabled = true;
+                
                 const match = error.message.match(/position (\d+)/);
                 const position = match ? parseInt(match[1]) : null;
                 const lineNumber = position ? getJsonLineNumber(input, position) : null;
                 
-                jsonOutput.innerHTML = `
+                let errorHtml = `
                     <div class="error">
                         <div class="error-title">JSON Parse Error</div>
                         <div>${escapeHtml(error.message)}</div>
                         ${lineNumber ? `<div style="margin-top: 8px;">At line: <strong>${lineNumber}</strong></div>` : ''}
-                    </div>
                 `;
+                
+                if (position !== null) {
+                    errorHtml += `
+                        <div class="error-input">${highlightErrorInInput(input, position)}</div>
+                    `;
+                }
+                
+                errorHtml += '</div>';
+                jsonOutput.innerHTML = errorHtml;
             }
         }
 
@@ -430,6 +566,7 @@
         // Event listeners
         jsonInput.addEventListener('input', debounce(renderJson, 300));
         jsonInput.addEventListener('paste', () => setTimeout(renderJson, 50));
+        copyButton.addEventListener('click', copyToClipboard);
 
         // Initial render
         renderJson();
