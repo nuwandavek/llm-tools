@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>/json-renderer</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: calc(100vh - 180px);
+            gap: 1px;
+            background: #333;
+        }
+
+        .panel {
+            background: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 15px 20px;
+            background: #2a2a2a;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #ccc;
+            border-bottom: 1px solid #333;
+        }
+
+        .input-area {
+            flex: 1;
+            padding: 20px;
+        }
+
+        #jsonInput {
+            width: 100%;
+            height: 100%;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            color: #e0e0e0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+        }
+
+        #jsonInput:focus {
+            border-color: #555;
+        }
+
+        .output-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* JSON tree styles */
+        .json-tree {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .json-node {
+            position: relative;
+        }
+
+        .json-toggle {
+            cursor: pointer;
+            user-select: none;
+            color: #656d76;
+            font-weight: bold;
+            margin-right: 6px;
+            display: inline-block;
+            width: 12px;
+            transition: transform 0.2s;
+        }
+
+        .json-toggle:hover {
+            color: #888;
+        }
+
+        .json-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .json-content {
+            margin-left: 20px;
+        }
+
+        .json-content.hidden {
+            display: none;
+        }
+
+        .json-key {
+            color: #79c0ff;
+            font-weight: 500;
+        }
+
+        .json-string {
+            color: #a5d6ff;
+        }
+
+        .json-number {
+            color: #79c0ff;
+        }
+
+        .json-boolean {
+            color: #56d364;
+        }
+
+        .json-null {
+            color: #f85149;
+        }
+
+        .json-bracket {
+            color: #e6edf3;
+            font-weight: 500;
+        }
+
+        .json-comma {
+            color: #e6edf3;
+        }
+
+        .json-ellipsis {
+            color: #656d76;
+            font-style: italic;
+        }
+
+        .error {
+            color: #f85149;
+            background: #2d1617;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #f85149;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .error-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .home-link {
+            color: #888;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s ease;
+        }
+
+        .home-link:hover {
+            color: #c0392b;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #444;
+            color: #888;
+            font-size: 14px;
+        }
+
+        .footer a {
+            color: #c0392b;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 1fr 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <a href="../index.html" class="home-link">← home</a>
+            <h1 style="margin: 0; flex-grow: 1; text-align: center;">/json-renderer</h1>
+            <div style="width: 50px;"></div> <!-- spacer for centering -->
+        </div>
+        <p style="text-align: center; color: #888; font-size: 14px;">Paste JSON on the left, see it beautifully rendered on the right</p>
+    </div>
+
+    <div class="container">
+        <div class="panel">
+            <div class="panel-header">JSON Input</div>
+            <div class="input-area">
+                <textarea id="jsonInput" placeholder="Paste your JSON here..."></textarea>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">Rendered Output</div>
+            <div class="output-area">
+                <div id="jsonOutput" class="json-tree"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        made with ❤️ by <a href="https://github.com/nuwandavek" target="_blank">nuwandavek</a>
+    </div>
+
+    <script>
+        const jsonInput = document.getElementById('jsonInput');
+        const jsonOutput = document.getElementById('jsonOutput');
+        let debounceTimer;
+
+        // Sample JSON to show on load
+        const sampleJson = `{
+  "name": "John Doe",
+  "age": 30,
+  "isActive": true,
+  "address": {
+    "street": "123 Main St",
+    "city": "New York",
+    "zipcode": "10001"
+  },
+  "hobbies": ["reading", "coding", "hiking"],
+  "spouse": null
+}`;
+
+        jsonInput.value = sampleJson;
+
+        function debounce(func, wait) {
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(debounceTimer);
+                    func(...args);
+                };
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(later, wait);
+            };
+        }
+
+        function getJsonLineNumber(jsonStr, position) {
+            const lines = jsonStr.substring(0, position).split('\n');
+            return lines.length;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function renderJsonValue(value, key = null, level = 0) {
+            const indent = '  '.repeat(level);
+            const shouldCollapse = level >= 1;
+            let html = '';
+            
+            // Add key if present
+            if (key !== null) {
+                html += `<span class="json-key">"${escapeHtml(key)}"</span>: `;
+            }
+            
+            if (value === null) {
+                return html + '<span class="json-null">null</span>';
+            }
+            
+            if (typeof value === 'string') {
+                return html + `<span class="json-string">"${escapeHtml(value)}"</span>`;
+            }
+            
+            if (typeof value === 'number') {
+                return html + `<span class="json-number">${value}</span>`;
+            }
+            
+            if (typeof value === 'boolean') {
+                return html + `<span class="json-boolean">${value}</span>`;
+            }
+            
+            if (Array.isArray(value)) {
+                if (value.length === 0) {
+                    return html + '<span class="json-bracket">[]</span>';
+                }
+                
+                const toggleId = 'toggle_' + Math.random().toString(36).substr(2, 9);
+                const isCollapsed = shouldCollapse ? 'collapsed' : '';
+                const contentHidden = shouldCollapse ? 'hidden' : '';
+                
+                html += `<span class="json-toggle ${isCollapsed}" onclick="toggleContent('${toggleId}')">▼</span>`;
+                html += '<span class="json-bracket">[</span>';
+                
+                if (shouldCollapse) {
+                    html += ` <span class="json-ellipsis">... ${value.length} items</span> `;
+                }
+                
+                html += '<span class="json-bracket">]</span>';
+                html += `<div id="${toggleId}" class="json-content ${contentHidden}">`;
+                
+                value.forEach((item, index) => {
+                    html += `<div style="margin-left: 20px;">`;
+                    html += renderJsonValue(item, null, level + 1);
+                    if (index < value.length - 1) {
+                        html += '<span class="json-comma">,</span>';
+                    }
+                    html += '</div>';
+                });
+                
+                html += `<div><span class="json-bracket">]</span></div>`;
+                html += '</div>';
+                
+                return html;
+            }
+            
+            if (typeof value === 'object') {
+                const keys = Object.keys(value);
+                if (keys.length === 0) {
+                    return html + '<span class="json-bracket">{}</span>';
+                }
+                
+                const toggleId = 'toggle_' + Math.random().toString(36).substr(2, 9);
+                const isCollapsed = shouldCollapse ? 'collapsed' : '';
+                const contentHidden = shouldCollapse ? 'hidden' : '';
+                
+                html += `<span class="json-toggle ${isCollapsed}" onclick="toggleContent('${toggleId}')">▼</span>`;
+                html += '<span class="json-bracket">{</span>';
+                
+                if (shouldCollapse) {
+                    html += ` <span class="json-ellipsis">... ${keys.length} keys</span> `;
+                }
+                
+                html += '<span class="json-bracket">}</span>';
+                html += `<div id="${toggleId}" class="json-content ${contentHidden}">`;
+                
+                keys.forEach((k, index) => {
+                    html += `<div style="margin-left: 20px;">`;
+                    html += renderJsonValue(value[k], k, level + 1);
+                    if (index < keys.length - 1) {
+                        html += '<span class="json-comma">,</span>';
+                    }
+                    html += '</div>';
+                });
+                
+                html += `<div><span class="json-bracket">}</span></div>`;
+                html += '</div>';
+                
+                return html;
+            }
+            
+            return html;
+        }
+
+        function toggleContent(toggleId) {
+            const toggle = event.target;
+            const content = document.getElementById(toggleId);
+            
+            toggle.classList.toggle('collapsed');
+            content.classList.toggle('hidden');
+        }
+
+        function renderJson() {
+            const input = jsonInput.value.trim();
+            
+            if (!input) {
+                jsonOutput.innerHTML = '<div style="color: #656d76; font-style: italic;">Enter JSON to see it rendered here...</div>';
+                return;
+            }
+            
+            try {
+                const parsed = JSON.parse(input);
+                jsonOutput.innerHTML = `<div class="json-tree">${renderJsonValue(parsed)}</div>`;
+            } catch (error) {
+                const match = error.message.match(/position (\d+)/);
+                const position = match ? parseInt(match[1]) : null;
+                const lineNumber = position ? getJsonLineNumber(input, position) : null;
+                
+                jsonOutput.innerHTML = `
+                    <div class="error">
+                        <div class="error-title">JSON Parse Error</div>
+                        <div>${escapeHtml(error.message)}</div>
+                        ${lineNumber ? `<div style="margin-top: 8px;">At line: <strong>${lineNumber}</strong></div>` : ''}
+                    </div>
+                `;
+            }
+        }
+
+        // Make toggleContent globally available
+        window.toggleContent = toggleContent;
+
+        // Event listeners
+        jsonInput.addEventListener('input', debounce(renderJson, 300));
+        jsonInput.addEventListener('paste', () => setTimeout(renderJson, 50));
+
+        // Initial render
+        renderJson();
+    </script>
+</body>
+</html>

@@ -37,8 +37,8 @@
         }
         
         .tools-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            display: flex;
+            flex-direction: column;
             gap: 20px;
         }
         
@@ -106,6 +106,14 @@
                 <div class="tool-description">
                     Convert video files to animated GIFs with cropping, scaling, and frame rate controls. 
                     Supports MP4, MOV, AVI, MKV, and WEBM formats.
+                </div>
+            </a>
+            
+            <a href="tool/json-renderer.html" class="tool-card">
+                <div class="tool-title">/json-renderer</div>
+                <div class="tool-description">
+                    Beautifully render and explore JSON data with syntax highlighting, collapsible trees, 
+                    and real-time error detection with line numbers.
                 </div>
             </a>
         </div>

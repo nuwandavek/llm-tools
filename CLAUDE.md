@@ -15,6 +15,7 @@ This repository contains simple tools written entirely by LLMs. Each tool is a s
 
 ## Style Guide
 - **Appearance**: Dark theme, clean and minimalistic design, flat colors, developer look
+- **Color scheme**: Use flat red (#c0392b) as the primary accent color for consistency across all tools
 - **Responsiveness**: Tools should be responsive and work well on both desktop and mobile devices
 - **HTML**: Use semantic HTML5 elements where appropriate
 - **CSS**: Use inline styles for tool-specific styles; avoid external stylesheets
@@ -22,6 +23,50 @@ This repository contains simple tools written entirely by LLMs. Each tool is a s
 - **Documentation**: Each tool should have a brief description at the top of the HTML file, explaining its purpose and usage
 - **Fonts**: Use JetBrains Mono (from google fonts)
 - **Title**: At the top, each tool should have a big header with style "/tool-name" in smaller case
+
+## Required Components
+Every tool must include these standardized elements:
+
+### Navigation
+- **Home link**: Add a "← home" link in the top-left that goes back to ../index.html
+- Use this CSS styling:
+```css
+.home-link {
+    color: #888;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s ease;
+}
+
+.home-link:hover {
+    color: #c0392b;
+}
+```
+- Place in a flex container with the title centered
+
+### Footer
+- **Attribution footer**: Include "made with ❤️ by nuwandavek" footer at the bottom
+- Use this CSS styling:
+```css
+.footer {
+    text-align: center;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #444;
+    color: #888;
+    font-size: 14px;
+}
+
+.footer a {
+    color: #c0392b;
+    text-decoration: none;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
+```
+- Link to: https://github.com/nuwandavek
 
 ## Development Workflow
 
