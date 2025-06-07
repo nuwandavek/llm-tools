@@ -41,7 +41,7 @@
         .container {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            height: calc(100vh - 260px);
+            height: calc(100vh - 180px);
             gap: 1px;
             background: #333;
         }
@@ -67,7 +67,7 @@
 
         .copy-button {
             position: absolute;
-            bottom: 50px;
+            bottom: 80px;
             left: 50%;
             transform: translateX(-50%);
             background: #c0392b;
@@ -99,14 +99,39 @@
         .input-area {
             flex: 1;
             padding: 20px;
+            position: relative;
+        }
+
+        .input-container {
+            position: relative;
+            height: 100%;
+            display: flex;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: #1a1a1a;
+            overflow: hidden;
+            max-height: calc(100vh - 280px);
+        }
+
+        .line-numbers {
+            padding: 15px 10px 15px 15px;
+            background: #0d1117;
+            color: #656d76;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            text-align: right;
+            user-select: none;
+            border-right: 1px solid #333;
+            min-width: 50px;
+            overflow-y: auto;
+            white-space: pre;
         }
 
         #jsonInput {
-            width: 100%;
-            height: 100%;
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 8px;
+            flex: 1;
+            background: transparent;
+            border: none;
             padding: 15px;
             color: #e0e0e0;
             font-family: 'JetBrains Mono', monospace;
@@ -114,25 +139,54 @@
             line-height: 1.6;
             resize: none;
             outline: none;
+            overflow-y: auto;
         }
 
         #jsonInput:focus {
-            border-color: #555;
+            background: transparent;
         }
 
         .output-area {
             flex: 1;
             padding: 20px;
+            overflow: hidden;
+        }
+
+        .output-container {
+            height: 100%;
+            display: flex;
+            border: 1px solid #333;
+            border-radius: 8px;
+            background: #1a1a1a;
+            overflow: hidden;
+            max-height: calc(100vh - 280px);
+        }
+
+        .output-line-numbers {
+            padding: 15px 10px 15px 15px;
+            background: #0d1117;
+            color: #656d76;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            text-align: right;
+            user-select: none;
+            border-right: 1px solid #333;
+            min-width: 50px;
             overflow-y: auto;
+            white-space: pre;
+            height: 100%;
+            min-height: 0;
         }
 
         #jsonOutput {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 8px;
+            flex: 1;
+            background: transparent;
+            border: none;
             padding: 15px;
-            height: 100%;
             overflow-y: auto;
+            height: 100%;
+            min-height: 0;
         }
 
         /* JSON tree styles */
@@ -237,8 +291,12 @@
         }
 
         .error-highlight {
-            background: rgba(248, 81, 73, 0.3);
+            background: #ff6b6b;
+            color: #000;
+            font-weight: bold;
             border-radius: 2px;
+            padding: 0 2px;
+            border: 1px solid #fff;
         }
 
         .home-link {
@@ -254,11 +312,11 @@
 
         .footer {
             text-align: center;
-            margin-top: 20px;
-            padding-top: 20px;
+            padding: 20px;
             border-top: 1px solid #444;
             color: #888;
             font-size: 14px;
+            background: #1a1a1a;
         }
 
         .footer a {
@@ -296,43 +354,40 @@
         <div class="panel">
             <div class="panel-header">JSON Input</div>
             <div class="input-area">
-                <textarea id="jsonInput" placeholder="Paste your JSON here..."></textarea>
+                <div class="input-container">
+                    <div class="line-numbers" id="inputLineNumbers">1</div>
+                    <textarea id="jsonInput" placeholder="Paste your JSON here..."></textarea>
+                </div>
             </div>
         </div>
 
         <div class="panel output-panel">
             <div class="panel-header">Rendered Output</div>
             <div class="output-area">
-                <div id="jsonOutput" class="json-tree"></div>
+                <div class="output-container">
+                    <div class="output-line-numbers" id="outputLineNumbers">1</div>
+                    <div id="jsonOutput" class="json-tree"></div>
+                </div>
             </div>
             <button id="copyButton" class="copy-button" disabled>Copy JSON</button>
         </div>
     </div>
 
     <div class="footer">
-        made with ❤️ by <a href="https://github.com/nuwandavek" target="_blank">nuwandavek</a>
+        made with ❤️ by <a href="https://github.com/nuwandavek" target="_blank">nuwandavek</a> | <a href="https://github.com/nuwandavek/llm-tools/blob/master/tool/json-renderer.html" target="_blank"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" style="vertical-align: middle; margin-right: 4px;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>view source</a>
     </div>
 
     <script>
         const jsonInput = document.getElementById('jsonInput');
         const jsonOutput = document.getElementById('jsonOutput');
         const copyButton = document.getElementById('copyButton');
+        const inputLineNumbers = document.getElementById('inputLineNumbers');
+        const outputLineNumbers = document.getElementById('outputLineNumbers');
         let debounceTimer;
         let currentParsedJson = null;
 
         // Sample JSON to show on load
-        const sampleJson = `{
-  "name": "John Doe",
-  "age": 30,
-  "isActive": true,
-  "address": {
-    "street": "123 Main St",
-    "city": "New York",
-    "zipcode": "10001"
-  },
-  "hobbies": ["reading", "coding", "hiking"],
-  "spouse": null
-}`;
+        const sampleJson = `{ "name": "John Doe", "age": 30, "isActive": true, "address": { "street": "123 Main St", "city": "New York", "zipcode": "10001" }, "hobbies": ["reading", "coding", "hiking"], "spouse": null}`;
 
         jsonInput.value = sampleJson;
 
@@ -409,9 +464,42 @@
             return div.innerHTML;
         }
 
+        function updateInputLineNumbers() {
+            const lines = jsonInput.value.split('\n');
+            const lineCount = lines.length;
+            const numbers = [];
+            for (let i = 1; i <= lineCount; i++) {
+                numbers.push(i);
+            }
+            inputLineNumbers.textContent = numbers.join('\n');
+        }
+
+        function updateOutputLineNumbers() {
+            // Use a timeout to ensure DOM is updated
+            setTimeout(() => {
+                // Get the actual text content and count real lines
+                const textContent = jsonOutput.textContent || jsonOutput.innerText || '';
+                
+                if (!textContent.trim() || textContent.includes('Enter JSON to see it rendered here')) {
+                    outputLineNumbers.textContent = '1';
+                    return;
+                }
+                
+                // Split by newlines and filter out empty lines
+                const lines = textContent.split('\n').filter(line => line.trim() !== '');
+                const lineCount = Math.max(1, lines.length);
+                
+                const numbers = [];
+                for (let i = 1; i <= lineCount; i++) {
+                    numbers.push(i);
+                }
+                outputLineNumbers.textContent = numbers.join('\n');
+            }, 50);
+        }
+
         function renderJsonValue(value, key = null, level = 0) {
             const indent = '  '.repeat(level);
-            const shouldCollapse = level >= 1;
+            const shouldCollapse = false; // Always expand by default
             let html = '';
             
             // Add key if present
@@ -526,6 +614,7 @@
                 jsonOutput.innerHTML = '<div style="color: #656d76; font-style: italic;">Enter JSON to see it rendered here...</div>';
                 currentParsedJson = null;
                 copyButton.disabled = true;
+                updateOutputLineNumbers();
                 return;
             }
             
@@ -534,6 +623,7 @@
                 currentParsedJson = parsed;
                 jsonOutput.innerHTML = `<div class="json-tree">${renderJsonValue(parsed)}</div>`;
                 copyButton.disabled = false;
+                updateOutputLineNumbers();
             } catch (error) {
                 currentParsedJson = null;
                 copyButton.disabled = true;
@@ -557,6 +647,7 @@
                 
                 errorHtml += '</div>';
                 jsonOutput.innerHTML = errorHtml;
+                updateOutputLineNumbers();
             }
         }
 
@@ -564,11 +655,24 @@
         window.toggleContent = toggleContent;
 
         // Event listeners
-        jsonInput.addEventListener('input', debounce(renderJson, 300));
-        jsonInput.addEventListener('paste', () => setTimeout(renderJson, 50));
+        jsonInput.addEventListener('input', () => {
+            updateInputLineNumbers();
+            debounce(renderJson, 300)();
+        });
+        jsonInput.addEventListener('paste', () => setTimeout(() => {
+            updateInputLineNumbers();
+            renderJson();
+        }, 50));
+        jsonInput.addEventListener('scroll', () => {
+            inputLineNumbers.scrollTop = jsonInput.scrollTop;
+        });
+        jsonOutput.addEventListener('scroll', () => {
+            outputLineNumbers.scrollTop = jsonOutput.scrollTop;
+        });
         copyButton.addEventListener('click', copyToClipboard);
 
         // Initial render
+        updateInputLineNumbers();
         renderJson();
     </script>
 </body>
