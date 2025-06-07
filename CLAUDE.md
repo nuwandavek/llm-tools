@@ -23,6 +23,11 @@ This repository contains simple tools written entirely by LLMs. Each tool is a s
 - **Documentation**: Each tool should have a brief description at the top of the HTML file, explaining its purpose and usage
 - **Fonts**: Use JetBrains Mono (from google fonts)
 - **Title**: At the top, each tool should have a big header with style "/tool-name" in smaller case
+- **UI Patterns**: 
+  - Use consistent copy buttons with red accent color and success feedback
+  - Include line numbers for code/text editors
+  - Use syntax highlighting with GitHub-style colors for code display
+  - Implement collapsible/expandable sections for complex data structures
 
 ## Required Components
 Every tool must include these standardized elements:
@@ -46,6 +51,7 @@ Every tool must include these standardized elements:
 
 ### Footer
 - **Attribution footer**: Include "made with ❤️ by nuwandavek" footer at the bottom
+- **GitHub source link**: Include a "view source" link pointing to the specific tool file on GitHub
 - Use this CSS styling:
 ```css
 .footer {
@@ -66,7 +72,7 @@ Every tool must include these standardized elements:
     text-decoration: underline;
 }
 ```
-- Link to: https://github.com/nuwandavek
+- Link format: `made with ❤️ by <a href="https://github.com/nuwandavek">nuwandavek</a> | <a href="https://github.com/nuwandavek/llm-tools/blob/master/tool/[TOOL-NAME].html">view source</a>`
 
 ## Development Workflow
 
