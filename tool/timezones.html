@@ -301,17 +301,18 @@
             top: 0;
             width: 1px;
             height: 100%;
-            background: #333;
+            background: #555;
+            z-index: 2;
         }
 
         .hour-marker.major {
-            background: #666;
+            background: #777;
             width: 2px;
         }
 
         .hour-marker.labeled {
-            background: #999;
-            width: 2px;
+            background: #aaa;
+            width: 3px;
             height: 100%;
         }
 
@@ -358,7 +359,7 @@
     </div>
 
     <div class="description">
-        See what time it is across different timezones with visual time bars
+        See what time it is across different timezones
     </div>
 
     <div class="controls">
@@ -390,6 +391,44 @@
                 </div>
             </div>
         </div>
+        
+        <div class="timezone-row" data-timezone="America/Los_Angeles">
+            <div class="timezone-name">Los Angeles (PST)<br><small style="color: #888; font-size: 12px;">GMT-8</small></div>
+            <div class="current-time" id="time-America/Los_Angeles">--:--</div>
+            <div class="time-bar-container">
+                <div class="time-scale" id="scale-America/Los_Angeles">
+                    <span>00</span>
+                    <span>06</span>
+                    <span>12</span>
+                    <span>18</span>
+                    <span>24</span>
+                </div>
+                <div class="time-bar" onmousemove="handleTimeBarHover(event, 'America/Los_Angeles')" onmouseleave="hideHoverLine()">
+                    <div class="hour-markers"></div>
+                    <div class="time-indicator" id="indicator-America/Los_Angeles"></div>
+                    <div class="hover-line" id="hover-line-America/Los_Angeles"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="timezone-row" data-timezone="Asia/Kolkata">
+            <div class="timezone-name">Mumbai (IST)<br><small style="color: #888; font-size: 12px;">GMT+5:30</small></div>
+            <div class="current-time" id="time-Asia/Kolkata">--:--</div>
+            <div class="time-bar-container">
+                <div class="time-scale" id="scale-Asia/Kolkata">
+                    <span>00</span>
+                    <span>06</span>
+                    <span>12</span>
+                    <span>18</span>
+                    <span>24</span>
+                </div>
+                <div class="time-bar" onmousemove="handleTimeBarHover(event, 'Asia/Kolkata')" onmouseleave="hideHoverLine()">
+                    <div class="hour-markers"></div>
+                    <div class="time-indicator" id="indicator-Asia/Kolkata"></div>
+                    <div class="hover-line" id="hover-line-Asia/Kolkata"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="add-timezone">
@@ -397,21 +436,21 @@
         <div class="timezone-dropdown" id="timezoneDropdown">
             <select class="timezone-select" id="timezoneSelect" onchange="addTimezone()">
                 <option value="">Select a timezone...</option>
-                <option value="America/New_York">New York (EST/EDT)</option>
-                <option value="America/Los_Angeles">Los Angeles (PST/PDT)</option>
-                <option value="America/Chicago">Chicago (CST/CDT)</option>
-                <option value="America/Denver">Denver (MST/MDT)</option>
-                <option value="Europe/London">London (GMT/BST)</option>
-                <option value="Europe/Paris">Paris (CET/CEST)</option>
-                <option value="Europe/Berlin">Berlin (CET/CEST)</option>
-                <option value="Europe/Rome">Rome (CET/CEST)</option>
+                <option value="America/New_York">New York (EST)</option>
+                <option value="America/Los_Angeles">Los Angeles (PST)</option>
+                <option value="America/Chicago">Chicago (CST)</option>
+                <option value="America/Denver">Denver (MST)</option>
+                <option value="Europe/London">London (GMT)</option>
+                <option value="Europe/Paris">Paris (CET)</option>
+                <option value="Europe/Berlin">Berlin (CET)</option>
+                <option value="Europe/Rome">Rome (CET)</option>
                 <option value="Asia/Tokyo">Tokyo (JST)</option>
                 <option value="Asia/Shanghai">Shanghai (CST)</option>
                 <option value="Asia/Kolkata">Mumbai (IST)</option>
                 <option value="Asia/Dubai">Dubai (GST)</option>
-                <option value="Australia/Sydney">Sydney (AEST/AEDT)</option>
-                <option value="Australia/Melbourne">Melbourne (AEST/AEDT)</option>
-                <option value="Pacific/Auckland">Auckland (NZST/NZDT)</option>
+                <option value="Australia/Sydney">Sydney (AEST)</option>
+                <option value="Australia/Melbourne">Melbourne (AEST)</option>
+                <option value="Pacific/Auckland">Auckland (NZST)</option>
             </select>
         </div>
     </div>
@@ -421,7 +460,7 @@
     </div>
 
     <script>
-        let timezones = ['UTC'];
+        let timezones = ['UTC', 'America/Los_Angeles', 'Asia/Kolkata'];
         let currentTimeReference = null;
         let is12HourFormat = true;
 
@@ -445,7 +484,7 @@
         };
 
         function createHourMarkers(container) {
-            // Create 24 hour markers (0-23)
+            // Create markers for every hour (0-24)
             for (let hour = 0; hour <= 24; hour++) {
                 const marker = document.createElement('div');
                 marker.className = 'hour-marker';
@@ -458,6 +497,7 @@
                 else if (hour % 3 === 0) {
                     marker.classList.add('major');
                 }
+                // All other hours get regular markers
                 
                 // Position marker at percentage of day
                 const position = (hour / 24) * 100;
@@ -605,12 +645,12 @@
             newRow.className = 'timezone-row';
             newRow.setAttribute('data-timezone', timezone);
             
-            const displayName = select.options[select.selectedIndex].text.split(' (')[0];
+            const fullDisplayName = select.options[select.selectedIndex].text;
             const offset = getTimezoneOffset(timezone);
             const offsetString = formatOffset(offset);
             
             newRow.innerHTML = `
-                <div class="timezone-name">${displayName}<br><small style="color: #888; font-size: 12px;">${offsetString}</small></div>
+                <div class="timezone-name">${fullDisplayName}<br><small style="color: #888; font-size: 12px;">${offsetString}</small></div>
                 <div class="current-time" id="time-${timezone}">--:--</div>
                 <div class="time-bar-container">
                     <div class="time-scale">
@@ -644,18 +684,26 @@
 
         // Initialize the tool
         function init() {
-            // Create hour markers for UTC row
-            const utcMarkers = document.querySelector('.hour-markers');
-            createHourMarkers(utcMarkers);
+            // Create hour markers for all default timezone rows
+            timezones.forEach(timezone => {
+                const markers = document.querySelector(`[data-timezone="${timezone}"] .hour-markers`);
+                if (markers) {
+                    createHourMarkers(markers);
+                }
+            });
             
             // Set toggle switch to 12h mode by default
             const toggle = document.getElementById('timeFormatToggle');
             toggle.classList.add('active');
             
-            // Initialize the scale for 12h mode
-            const utcScale = document.getElementById('scale-UTC');
-            const baseHours = [0, 6, 12, 18, 24];
-            utcScale.innerHTML = baseHours.map(h => `<span>${formatHour(h)}</span>`).join('');
+            // Initialize the scales for 12h mode
+            timezones.forEach(timezone => {
+                const scale = document.getElementById(`scale-${timezone}`);
+                if (scale) {
+                    const baseHours = [0, 6, 12, 18, 24];
+                    scale.innerHTML = baseHours.map(h => `<span>${formatHour(h)}</span>`).join('');
+                }
+            });
             
             updateAllTimes();
             
@@ -726,8 +774,10 @@
                 let displayName = 'UTC';
                 if (timezone !== 'UTC') {
                     const nameElement = document.querySelector(`[data-timezone="${timezone}"] .timezone-name`);
-                    // Get only the text before the <br> tag (city name)
-                    displayName = nameElement.childNodes[0].textContent;
+                    // Get only the text before the <br> tag (city name with timezone)
+                    const fullName = nameElement.childNodes[0].textContent;
+                    // Extract just the city name (before parentheses)
+                    displayName = fullName.split(' (')[0];
                 }
                 
                 tooltipContent.push(`<div class="hover-tooltip-item"><span class="hover-tooltip-timezone">${displayName}:</span> ${timeString}</div>`);
