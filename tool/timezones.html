@@ -393,7 +393,7 @@
         </div>
         
         <div class="timezone-row" data-timezone="America/Los_Angeles">
-            <div class="timezone-name">Los Angeles (PST)<br><small style="color: #888; font-size: 12px;">GMT-8</small></div>
+            <div class="timezone-name">Los Angeles (<span id="abbrev-America/Los_Angeles">PST</span>)<br><small style="color: #888; font-size: 12px;"><span id="offset-America/Los_Angeles">GMT-8</span></small></div>
             <div class="current-time" id="time-America/Los_Angeles">--:--</div>
             <div class="time-bar-container">
                 <div class="time-scale" id="scale-America/Los_Angeles">
@@ -412,7 +412,7 @@
         </div>
         
         <div class="timezone-row" data-timezone="Asia/Kolkata">
-            <div class="timezone-name">Mumbai (IST)<br><small style="color: #888; font-size: 12px;">GMT+5:30</small></div>
+            <div class="timezone-name">Mumbai (<span id="abbrev-Asia/Kolkata">IST</span>)<br><small style="color: #888; font-size: 12px;"><span id="offset-Asia/Kolkata">GMT+5:30</span></small></div>
             <div class="current-time" id="time-Asia/Kolkata">--:--</div>
             <div class="time-bar-container">
                 <div class="time-scale" id="scale-Asia/Kolkata">
@@ -436,21 +436,21 @@
         <div class="timezone-dropdown" id="timezoneDropdown">
             <select class="timezone-select" id="timezoneSelect" onchange="addTimezone()">
                 <option value="">Select a timezone...</option>
-                <option value="America/New_York">New York (EST)</option>
-                <option value="America/Los_Angeles">Los Angeles (PST)</option>
-                <option value="America/Chicago">Chicago (CST)</option>
-                <option value="America/Denver">Denver (MST)</option>
-                <option value="Europe/London">London (GMT)</option>
-                <option value="Europe/Paris">Paris (CET)</option>
-                <option value="Europe/Berlin">Berlin (CET)</option>
-                <option value="Europe/Rome">Rome (CET)</option>
-                <option value="Asia/Tokyo">Tokyo (JST)</option>
-                <option value="Asia/Shanghai">Shanghai (CST)</option>
-                <option value="Asia/Kolkata">Mumbai (IST)</option>
-                <option value="Asia/Dubai">Dubai (GST)</option>
-                <option value="Australia/Sydney">Sydney (AEST)</option>
-                <option value="Australia/Melbourne">Melbourne (AEST)</option>
-                <option value="Pacific/Auckland">Auckland (NZST)</option>
+                <option value="America/New_York">New York</option>
+                <option value="America/Los_Angeles">Los Angeles</option>
+                <option value="America/Chicago">Chicago</option>
+                <option value="America/Denver">Denver</option>
+                <option value="Europe/London">London</option>
+                <option value="Europe/Paris">Paris</option>
+                <option value="Europe/Berlin">Berlin</option>
+                <option value="Europe/Rome">Rome</option>
+                <option value="Asia/Tokyo">Tokyo</option>
+                <option value="Asia/Shanghai">Shanghai</option>
+                <option value="Asia/Kolkata">Mumbai</option>
+                <option value="Asia/Dubai">Dubai</option>
+                <option value="Australia/Sydney">Sydney</option>
+                <option value="Australia/Melbourne">Melbourne</option>
+                <option value="Pacific/Auckland">Auckland</option>
             </select>
         </div>
     </div>
@@ -464,24 +464,7 @@
         let currentTimeReference = null;
         let is12HourFormat = true;
 
-        const timezoneOffsets = {
-            'UTC': 0,
-            'America/New_York': -5, // EST (can be -4 for EDT)
-            'America/Los_Angeles': -8, // PST (can be -7 for PDT)
-            'America/Chicago': -6, // CST (can be -5 for CDT)
-            'America/Denver': -7, // MST (can be -6 for MDT)
-            'Europe/London': 0, // GMT (can be +1 for BST)
-            'Europe/Paris': 1, // CET (can be +2 for CEST)
-            'Europe/Berlin': 1, // CET (can be +2 for CEST)
-            'Europe/Rome': 1, // CET (can be +2 for CEST)
-            'Asia/Tokyo': 9,
-            'Asia/Shanghai': 8,
-            'Asia/Kolkata': 5.5,
-            'Asia/Dubai': 4,
-            'Australia/Sydney': 10, // AEST (can be +11 for AEDT)
-            'Australia/Melbourne': 10, // AEST (can be +11 for AEDT)
-            'Pacific/Auckland': 12 // NZST (can be +13 for NZDT)
-        };
+        // Using browser's built-in timezone support instead of hardcoded offsets
 
         function createHourMarkers(container) {
             // Create markers for every hour (0-24)
@@ -508,12 +491,55 @@
         }
 
         function getTimezoneOffset(timezone) {
-            const now = new Date();
             if (timezone === 'UTC') return 0;
             
-            const utc = new Date(now.getTime() + (now.getTimezoneOffset() * 60000));
-            const local = new Date(now.toLocaleString("en-US", {timeZone: timezone}));
-            return (local.getTime() - utc.getTime()) / (1000 * 60 * 60);
+            const now = new Date();
+            // Use Intl.DateTimeFormat to get the actual offset (handles DST automatically)
+            const utcTime = new Date(now.toLocaleString("en-US", {timeZone: "UTC"}));
+            const localTime = new Date(now.toLocaleString("en-US", {timeZone: timezone}));
+            return (localTime.getTime() - utcTime.getTime()) / (1000 * 60 * 60);
+        }
+        
+        function getTimezoneAbbreviation(timezone) {
+            if (timezone === 'UTC') return 'GMT';
+            
+            // Fallback mapping for timezones that don't return standard abbreviations
+            const timezoneAbbrevMap = {
+                'Asia/Kolkata': 'IST',
+                'Asia/Shanghai': 'CST',
+                'Asia/Tokyo': 'JST',
+                'Asia/Dubai': 'GST',
+                'Australia/Sydney': 'AEST/AEDT',
+                'Australia/Melbourne': 'AEST/AEDT',
+                'Pacific/Auckland': 'NZST/NZDT',
+                'Europe/London': 'GMT/BST',
+                'Europe/Paris': 'CET/CEST',
+                'Europe/Berlin': 'CET/CEST',
+                'Europe/Rome': 'CET/CEST'
+            };
+            
+            const now = new Date();
+            try {
+                // Try to get timezone abbreviation from browser first
+                const formatter = new Intl.DateTimeFormat('en-US', {
+                    timeZone: timezone,
+                    timeZoneName: 'short'
+                });
+                const parts = formatter.formatToParts(now);
+                const timeZonePart = parts.find(part => part.type === 'timeZoneName');
+                const browserAbbrev = timeZonePart ? timeZonePart.value : '';
+                
+                // If browser gives a proper abbreviation (like PST, PDT), use it
+                if (browserAbbrev && browserAbbrev.length <= 4 && /^[A-Z]+$/.test(browserAbbrev)) {
+                    return browserAbbrev;
+                }
+                
+                // Otherwise, use our fallback mapping
+                return timezoneAbbrevMap[timezone] || '';
+            } catch (e) {
+                // Fallback to our mapping if browser API fails
+                return timezoneAbbrevMap[timezone] || '';
+            }
         }
 
         function formatOffset(offset) {
@@ -594,10 +620,21 @@
                 const timeElement = document.getElementById(`time-${timezone}`);
                 const indicatorElement = document.getElementById(`indicator-${timezone}`);
                 const scaleElement = indicatorElement?.parentElement?.previousElementSibling;
+                const abbreviationElement = document.getElementById(`abbrev-${timezone}`);
+                const offsetElement = document.getElementById(`offset-${timezone}`);
                 
                 if (timeElement && indicatorElement && scaleElement) {
                     const time = getTimeInTimezone(timezone);
                     timeElement.textContent = formatTime(time);
+                    
+                    // Update timezone abbreviation and offset dynamically
+                    if (abbreviationElement && offsetElement) {
+                        const abbreviation = getTimezoneAbbreviation(timezone);
+                        const offset = getTimezoneOffset(timezone);
+                        const offsetString = formatOffset(offset);
+                        abbreviationElement.textContent = abbreviation;
+                        offsetElement.textContent = offsetString;
+                    }
                     
                     if (index === 0) {
                         // First timezone (UTC) - normal scale
@@ -645,12 +682,13 @@
             newRow.className = 'timezone-row';
             newRow.setAttribute('data-timezone', timezone);
             
-            const fullDisplayName = select.options[select.selectedIndex].text;
+            const cityName = select.options[select.selectedIndex].text.split(' (')[0];
             const offset = getTimezoneOffset(timezone);
             const offsetString = formatOffset(offset);
+            const abbreviation = getTimezoneAbbreviation(timezone);
             
             newRow.innerHTML = `
-                <div class="timezone-name">${fullDisplayName}<br><small style="color: #888; font-size: 12px;">${offsetString}</small></div>
+                <div class="timezone-name">${cityName} (<span id="abbrev-${timezone}">${abbreviation}</span>)<br><small style="color: #888; font-size: 12px;"><span id="offset-${timezone}">${offsetString}</span></small></div>
                 <div class="current-time" id="time-${timezone}">--:--</div>
                 <div class="time-bar-container">
                     <div class="time-scale">
