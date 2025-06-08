@@ -13,10 +13,13 @@ The goal is to populate this with tools I use frequently (often on buggy, or sha
 ## Tools
 
 ### 1. [`/vid2gif`](https://vivekaithal.co/llm-tools/tool/vid2gif)
-Convert video files to animated GIFs with cropping, scaling, and frame rate controls. Supports MP4, MOV, AVI, MKV, and WEBM formats.
+Convert video files to animated GIFs.
 
 ### 2. [`/json-renderer`](https://vivekaithal.co/llm-tools/tool/json-renderer)
-Beautifully render and explore JSON data with syntax highlighting, collapsible trees, and real-time error detection with line numbers.
+Render and explore JSON data.
+
+### 3. [`/timezones`](https://vivekaithal.co/llm-tools/tool/timezones)
+Visualize current time across different timezones.
 
 ---
 
