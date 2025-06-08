@@ -1,4 +1,4 @@
-# 🛠️ LLM Tools
+# 🛠️ /llm-tools
 
 **Simple, powerful tools written entirely by LLMs**
 
