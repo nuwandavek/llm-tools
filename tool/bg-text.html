@@ -260,6 +260,32 @@
             border: none;
         }
 
+        .color-picker {
+            width: 100%;
+            height: 40px;
+            border: 1px solid #444;
+            border-radius: 6px;
+            background-color: #333;
+            cursor: pointer;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+
+        .color-picker::-webkit-color-swatch-wrapper {
+            padding: 0;
+        }
+
+        .color-picker::-webkit-color-swatch {
+            border: none;
+            border-radius: 4px;
+        }
+
+        .color-picker::-moz-color-swatch {
+            border: none;
+            border-radius: 4px;
+        }
+
         .footer {
             text-align: center;
             margin-top: 40px;
@@ -344,7 +370,11 @@
                         <label class="slider-label">Text Y Position</label>
                         <input type="range" id="textYSlider" class="slider" min="0" max="100" value="50">
                     </div>
-                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <div class="slider-container">
+                        <label class="slider-label">Text Color</label>
+                        <input type="color" id="textColorPicker" class="color-picker" value="#ffffff">
+                    </div>
+                    <div style="display: flex; justify-content: center; margin-top: 10px;">
                         <button class="btn" id="downloadCompositedBtn">Download</button>
                     </div>
                 </div>
@@ -388,6 +418,7 @@
                 this.textSizeSlider = document.getElementById('textSizeSlider');
                 this.textXSlider = document.getElementById('textXSlider');
                 this.textYSlider = document.getElementById('textYSlider');
+                this.textColorPicker = document.getElementById('textColorPicker');
                 this.downloadBtn = document.getElementById('downloadBtn');
                 this.downloadCompositedBtn = document.getElementById('downloadCompositedBtn');
             }
@@ -418,6 +449,7 @@
                 this.textSizeSlider.addEventListener('input', this.updateCompositeImage.bind(this));
                 this.textXSlider.addEventListener('input', this.updateCompositeImage.bind(this));
                 this.textYSlider.addEventListener('input', this.updateCompositeImage.bind(this));
+                this.textColorPicker.addEventListener('input', this.updateCompositeImage.bind(this));
             }
 
             handleDragOver(e) {
@@ -651,17 +683,18 @@
                 // Step 2: Add text layer if there's text
                 const text = this.textInput.value.trim();
                 if (text) {
-                    // Get values from sliders
+                    // Get values from sliders and color picker
                     const fontSize = parseInt(this.textSizeSlider.value);
                     const textXPercent = parseInt(this.textXSlider.value);
                     const textYPercent = parseInt(this.textYSlider.value);
+                    const textColor = this.textColorPicker.value;
                     
                     ctx.font = `900 ${fontSize}px 'Lato', sans-serif`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
 
-                    // Set text color (pure white, no transparency)
-                    ctx.fillStyle = 'rgba(255, 255, 255, 1.0)';
+                    // Set text color from picker
+                    ctx.fillStyle = textColor;
 
                     // Calculate position based on slider percentages
                     const x = (canvas.width * textXPercent) / 100;
