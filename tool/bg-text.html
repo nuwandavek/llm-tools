@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>/bg-text - Background Removal Tool</title>
+    <title>/bg-text - Background Separation & Text Overlay Tool</title>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         * {
@@ -325,8 +325,7 @@
         </div>
 
         <div class="description">
-            Remove backgrounds from images using AI-powered segmentation with BRIA 1.4 model<br>
-            <small style="color: #666; font-size: 12px;">⏱️ Downloads ~30s first time, then cached for instant loading</small>
+            Separate backgrounds from foreground subjects and add custom text overlays that appear behind the subject
         </div>
 
         <div class="upload-section">
@@ -350,17 +349,17 @@
         <div class="results-section" id="resultsSection">
             <div class="image-comparison">
                 <div class="image-container">
-                    <div class="image-label">Background Removed</div>
+                    <div class="image-label">Background Separated</div>
                     <img id="processedImage" class="result-image" alt="Processed image">
                     <button class="btn download-btn" id="downloadBtn">Download</button>
                 </div>
                 <div class="image-container">
-                    <div class="image-label">With Text Layer</div>
+                    <div class="image-label">With Text Behind Subject</div>
                     <img id="compositedImage" class="result-image" alt="Image with text">
                     <textarea id="textInput" class="text-input" placeholder="Enter text to overlay behind the subject..."></textarea>
                     <div class="slider-container">
                         <label class="slider-label">Text Size</label>
-                        <input type="range" id="textSizeSlider" class="slider" min="10" max="400" value="50">
+                        <input type="range" id="textSizeSlider" class="slider" min="10" max="800" value="50">
                     </div>
                     <div class="slider-container">
                         <label class="slider-label">Text X Position</label>
@@ -398,6 +397,7 @@
                 this.model = null;
                 this.processor = null;
                 this.isModelLoaded = false;
+                this.updateTimeout = null; // For debouncing
                 this.initializeElements();
                 this.setupEventListeners();
                 this.loadModel();
@@ -444,12 +444,20 @@
                 this.downloadCompositedBtn.addEventListener('click', this.downloadCompositedImage.bind(this));
 
 
-                // Text input changes
-                this.textInput.addEventListener('input', this.updateCompositeImage.bind(this));
-                this.textSizeSlider.addEventListener('input', this.updateCompositeImage.bind(this));
-                this.textXSlider.addEventListener('input', this.updateCompositeImage.bind(this));
-                this.textYSlider.addEventListener('input', this.updateCompositeImage.bind(this));
-                this.textColorPicker.addEventListener('input', this.updateCompositeImage.bind(this));
+                // Text input changes with debouncing
+                this.textInput.addEventListener('input', this.debouncedUpdateComposite.bind(this));
+                
+                // Slider changes - use 'input' for real-time during drag, 'change' for final value
+                this.textSizeSlider.addEventListener('input', this.debouncedUpdateComposite.bind(this));
+                this.textSizeSlider.addEventListener('change', this.updateCompositeImage.bind(this)); // Immediate on release
+                
+                this.textXSlider.addEventListener('input', this.debouncedUpdateComposite.bind(this));
+                this.textXSlider.addEventListener('change', this.updateCompositeImage.bind(this)); // Immediate on release
+                
+                this.textYSlider.addEventListener('input', this.debouncedUpdateComposite.bind(this));
+                this.textYSlider.addEventListener('change', this.updateCompositeImage.bind(this)); // Immediate on release
+                
+                this.textColorPicker.addEventListener('input', this.updateCompositeImage.bind(this)); // Color picker is usually instant
             }
 
             handleDragOver(e) {
@@ -503,14 +511,14 @@
                 const modelCached = await this.checkModelCache();
                 
                 if (modelCached) {
-                    this.showProgress('Loading cached model...', 0);
+                    this.showProgress('Loading model...', 0);
                 } else {
-                    this.showProgress('Downloading BRIA 1.4 model... (this will be cached)', 0);
+                    this.showProgress('Downloading AI model... (~30 seconds first time)', 0);
                 }
 
                 try {
                     // Load the BRIA 1.4 background removal model
-                    this.updateProgress(20, modelCached ? 'Loading cached model...' : 'Downloading model...');
+                    this.updateProgress(20, modelCached ? 'Loading model...' : 'Downloading model...');
                     this.model = await AutoModel.from_pretrained('briaai/RMBG-1.4', {
                         config: { model_type: 'custom' },
                         progress_callback: (progress) => {
@@ -521,7 +529,7 @@
                         }
                     });
 
-                    this.updateProgress(60, modelCached ? 'Loading cached processor...' : 'Downloading processor...');
+                    this.updateProgress(60, modelCached ? 'Loading processor...' : 'Downloading processor...');
                     this.processor = await AutoProcessor.from_pretrained('briaai/RMBG-1.4', {
                         config: {
                             do_normalize: true,
@@ -538,13 +546,13 @@
                         }
                     });
 
-                    this.updateProgress(95, 'Saving to cache...');
+                    this.updateProgress(95, 'Preparing model...');
                     
                     // Mark as cached in localStorage
                     localStorage.setItem('bg-text-model-cached', 'true');
 
                     this.isModelLoaded = true;
-                    this.updateProgress(100, modelCached ? 'Cached model loaded successfully!' : 'Model downloaded and cached successfully!');
+                    this.updateProgress(100, 'Model ready!');
                     
                     // Enable upload area
                     this.uploadArea.classList.remove('disabled');
@@ -557,7 +565,7 @@
 
                 } catch (error) {
                     console.error('Error loading model:', error);
-                    this.updateProgress(0, 'Error loading BRIA model. Please try again.');
+                    this.updateProgress(0, 'Error loading model. Please try again.');
                 }
             }
 
@@ -668,6 +676,18 @@
                 link.click();
             }
 
+
+            debouncedUpdateComposite() {
+                // Clear existing timeout
+                if (this.updateTimeout) {
+                    clearTimeout(this.updateTimeout);
+                }
+                
+                // Set new timeout - update after 300ms of no changes
+                this.updateTimeout = setTimeout(() => {
+                    this.updateCompositeImage();
+                }, 300);
+            }
 
             updateCompositeImage() {
                 if (!this.originalCanvas || !this.processedCanvas) return;
