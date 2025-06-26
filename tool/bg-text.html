@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>/bg-text - Background Removal Tool</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Lato:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -72,7 +72,7 @@
             border-radius: 8px;
             padding: 40px;
             cursor: pointer;
-            transition: border-color 0.3s ease;
+            transition: border-color 0.3s ease, opacity 0.3s ease;
             margin-bottom: 20px;
         }
 
@@ -83,6 +83,16 @@
         .upload-area.dragover {
             border-color: #c0392b;
             background-color: #333;
+        }
+
+        .upload-area.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            border-color: #333;
+        }
+
+        .upload-area.disabled:hover {
+            border-color: #333;
         }
 
         .upload-icon {
@@ -104,12 +114,14 @@
             background-color: #c0392b;
             color: white;
             border: none;
-            padding: 12px 24px;
+            padding: 12px 20px;
             border-radius: 6px;
             cursor: pointer;
             font-family: 'JetBrains Mono', monospace;
             font-size: 14px;
             transition: background-color 0.3s ease;
+            min-width: 100px;
+            text-align: center;
         }
 
         .btn:hover {
@@ -185,6 +197,69 @@
             margin-top: 10px;
         }
 
+        .text-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 6px;
+            background-color: #333;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            margin-top: 10px;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .text-input:focus {
+            outline: none;
+            border-color: #c0392b;
+        }
+
+        .text-input::placeholder {
+            color: #888;
+        }
+
+        .slider-container {
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .slider-label {
+            color: #888;
+            font-size: 12px;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #444;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #c0392b;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #c0392b;
+            cursor: pointer;
+            border: none;
+        }
+
         .footer {
             text-align: center;
             margin-top: 40px;
@@ -212,6 +287,7 @@
                 font-size: 28px;
             }
         }
+
     </style>
 </head>
 <body>
@@ -223,14 +299,15 @@
         </div>
 
         <div class="description">
-            Remove backgrounds from images using AI-powered segmentation with BRIA 1.4 model
+            Remove backgrounds from images using AI-powered segmentation with BRIA 1.4 model<br>
+            <small style="color: #666; font-size: 12px;">⏱️ Downloads ~30s first time, then cached for instant loading</small>
         </div>
 
         <div class="upload-section">
-            <div class="upload-area" id="uploadArea">
+            <div class="upload-area disabled" id="uploadArea">
                 <div class="upload-icon">📷</div>
-                <div class="upload-text">
-                    Drop an image here or click to select
+                <div class="upload-text" id="uploadText">
+                    Loading model... Please wait
                 </div>
             </div>
             <input type="file" id="fileInput" class="file-input" accept="image/*">
@@ -247,13 +324,29 @@
         <div class="results-section" id="resultsSection">
             <div class="image-comparison">
                 <div class="image-container">
-                    <div class="image-label">Original</div>
-                    <img id="originalImage" class="result-image" alt="Original image">
-                </div>
-                <div class="image-container">
                     <div class="image-label">Background Removed</div>
                     <img id="processedImage" class="result-image" alt="Processed image">
                     <button class="btn download-btn" id="downloadBtn">Download</button>
+                </div>
+                <div class="image-container">
+                    <div class="image-label">With Text Layer</div>
+                    <img id="compositedImage" class="result-image" alt="Image with text">
+                    <textarea id="textInput" class="text-input" placeholder="Enter text to overlay behind the subject..."></textarea>
+                    <div class="slider-container">
+                        <label class="slider-label">Text Size</label>
+                        <input type="range" id="textSizeSlider" class="slider" min="10" max="400" value="50">
+                    </div>
+                    <div class="slider-container">
+                        <label class="slider-label">Text X Position</label>
+                        <input type="range" id="textXSlider" class="slider" min="0" max="100" value="50">
+                    </div>
+                    <div class="slider-container">
+                        <label class="slider-label">Text Y Position</label>
+                        <input type="range" id="textYSlider" class="slider" min="0" max="100" value="50">
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="btn" id="downloadCompositedBtn">Download</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -282,20 +375,29 @@
 
             initializeElements() {
                 this.uploadArea = document.getElementById('uploadArea');
+                this.uploadText = document.getElementById('uploadText');
                 this.fileInput = document.getElementById('fileInput');
                 this.processBtn = document.getElementById('processBtn');
                 this.progressSection = document.getElementById('progressSection');
                 this.progressFill = document.getElementById('progressFill');
                 this.progressText = document.getElementById('progressText');
                 this.resultsSection = document.getElementById('resultsSection');
-                this.originalImage = document.getElementById('originalImage');
                 this.processedImage = document.getElementById('processedImage');
+                this.compositedImage = document.getElementById('compositedImage');
+                this.textInput = document.getElementById('textInput');
+                this.textSizeSlider = document.getElementById('textSizeSlider');
+                this.textXSlider = document.getElementById('textXSlider');
+                this.textYSlider = document.getElementById('textYSlider');
                 this.downloadBtn = document.getElementById('downloadBtn');
+                this.downloadCompositedBtn = document.getElementById('downloadCompositedBtn');
             }
 
             setupEventListeners() {
                 // Upload area events
-                this.uploadArea.addEventListener('click', () => this.fileInput.click());
+                this.uploadArea.addEventListener('click', () => {
+                    if (!this.isModelLoaded) return;
+                    this.fileInput.click();
+                });
                 this.uploadArea.addEventListener('dragover', this.handleDragOver.bind(this));
                 this.uploadArea.addEventListener('dragleave', this.handleDragLeave.bind(this));
                 this.uploadArea.addEventListener('drop', this.handleDrop.bind(this));
@@ -306,12 +408,21 @@
                 // Process button
                 this.processBtn.addEventListener('click', this.processImage.bind(this));
 
-                // Download button
+                // Download buttons
                 this.downloadBtn.addEventListener('click', this.downloadImage.bind(this));
+                this.downloadCompositedBtn.addEventListener('click', this.downloadCompositedImage.bind(this));
+
+
+                // Text input changes
+                this.textInput.addEventListener('input', this.updateCompositeImage.bind(this));
+                this.textSizeSlider.addEventListener('input', this.updateCompositeImage.bind(this));
+                this.textXSlider.addEventListener('input', this.updateCompositeImage.bind(this));
+                this.textYSlider.addEventListener('input', this.updateCompositeImage.bind(this));
             }
 
             handleDragOver(e) {
                 e.preventDefault();
+                if (!this.isModelLoaded) return;
                 this.uploadArea.classList.add('dragover');
             }
 
@@ -322,6 +433,7 @@
 
             handleDrop(e) {
                 e.preventDefault();
+                if (!this.isModelLoaded) return;
                 this.uploadArea.classList.remove('dragover');
                 const files = e.dataTransfer.files;
                 if (files.length > 0 && files[0].type.startsWith('image/')) {
@@ -330,6 +442,7 @@
             }
 
             handleFileSelect(e) {
+                if (!this.isModelLoaded) return;
                 const file = e.target.files[0];
                 if (file) {
                     this.handleFile(file);
@@ -344,8 +457,8 @@
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     this.uploadArea.innerHTML = `
-                        <img src="${e.target.result}" style="max-width: 200px; max-height: 200px; border-radius: 6px;">
-                        <div style="margin-top: 10px; color: #888;">Click to change image</div>
+                        <img src="${e.target.result}" style="max-width: 350px; max-height: 300px; border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+                        <div style="margin-top: 15px; color: #888; font-size: 14px;">Click to change image</div>
                     `;
                 };
                 reader.readAsDataURL(file);
@@ -354,16 +467,29 @@
             async loadModel() {
                 if (this.isModelLoaded) return;
 
-                this.showProgress('Loading BRIA 1.4 model...', 0);
+                // Check if model is cached
+                const modelCached = await this.checkModelCache();
+                
+                if (modelCached) {
+                    this.showProgress('Loading cached model...', 0);
+                } else {
+                    this.showProgress('Downloading BRIA 1.4 model... (this will be cached)', 0);
+                }
 
                 try {
                     // Load the BRIA 1.4 background removal model
-                    this.updateProgress(20, 'Loading model...');
+                    this.updateProgress(20, modelCached ? 'Loading cached model...' : 'Downloading model...');
                     this.model = await AutoModel.from_pretrained('briaai/RMBG-1.4', {
-                        config: { model_type: 'custom' }
+                        config: { model_type: 'custom' },
+                        progress_callback: (progress) => {
+                            if (!modelCached && progress.status === 'downloading') {
+                                const percent = Math.round((progress.loaded / progress.total) * 40) + 20;
+                                this.updateProgress(percent, `Downloading model... ${Math.round((progress.loaded / progress.total) * 100)}%`);
+                            }
+                        }
                     });
 
-                    this.updateProgress(60, 'Loading processor...');
+                    this.updateProgress(60, modelCached ? 'Loading cached processor...' : 'Downloading processor...');
                     this.processor = await AutoProcessor.from_pretrained('briaai/RMBG-1.4', {
                         config: {
                             do_normalize: true,
@@ -371,11 +497,26 @@
                             image_mean: [0.5, 0.5, 0.5],
                             image_std: [1, 1, 1],
                             size: { width: 1024, height: 1024 }
+                        },
+                        progress_callback: (progress) => {
+                            if (!modelCached && progress.status === 'downloading') {
+                                const percent = Math.round((progress.loaded / progress.total) * 30) + 60;
+                                this.updateProgress(percent, `Downloading processor... ${Math.round((progress.loaded / progress.total) * 100)}%`);
+                            }
                         }
                     });
 
+                    this.updateProgress(95, 'Saving to cache...');
+                    
+                    // Mark as cached in localStorage
+                    localStorage.setItem('bg-text-model-cached', 'true');
+
                     this.isModelLoaded = true;
-                    this.updateProgress(100, 'BRIA 1.4 model loaded successfully!');
+                    this.updateProgress(100, modelCached ? 'Cached model loaded successfully!' : 'Model downloaded and cached successfully!');
+                    
+                    // Enable upload area
+                    this.uploadArea.classList.remove('disabled');
+                    this.uploadText.textContent = 'Drop an image here or click to select';
                     
                     // Hide progress after a short delay
                     setTimeout(() => {
@@ -386,6 +527,12 @@
                     console.error('Error loading model:', error);
                     this.updateProgress(0, 'Error loading BRIA model. Please try again.');
                 }
+            }
+
+            async checkModelCache() {
+                // Check if we've cached the model before using localStorage
+                const cached = localStorage.getItem('bg-text-model-cached');
+                return !!cached;
             }
 
             async processImage() {
@@ -461,9 +608,13 @@
 
 
             showResults(originalCanvas, processedCanvas) {
-                this.originalImage.src = originalCanvas.toDataURL('image/png');
                 this.processedImage.src = processedCanvas.toDataURL('image/png');
                 this.processedCanvas = processedCanvas;
+                this.originalCanvas = originalCanvas;
+                
+                // Generate initial composite image
+                this.updateCompositeImage();
+                
                 this.resultsSection.style.display = 'block';
             }
 
@@ -474,6 +625,78 @@
                 link.download = 'background-removed.png';
                 link.href = this.processedCanvas.toDataURL('image/png');
                 link.click();
+            }
+
+            downloadCompositedImage() {
+                if (!this.compositedCanvas) return;
+
+                const link = document.createElement('a');
+                link.download = 'composited-image.png';
+                link.href = this.compositedCanvas.toDataURL('image/png');
+                link.click();
+            }
+
+
+            updateCompositeImage() {
+                if (!this.originalCanvas || !this.processedCanvas) return;
+
+                const canvas = document.createElement('canvas');
+                canvas.width = this.originalCanvas.width;
+                canvas.height = this.originalCanvas.height;
+                const ctx = canvas.getContext('2d');
+
+                // Step 1: Draw the original background
+                ctx.drawImage(this.originalCanvas, 0, 0);
+
+                // Step 2: Add text layer if there's text
+                const text = this.textInput.value.trim();
+                if (text) {
+                    // Get values from sliders
+                    const fontSize = parseInt(this.textSizeSlider.value);
+                    const textXPercent = parseInt(this.textXSlider.value);
+                    const textYPercent = parseInt(this.textYSlider.value);
+                    
+                    ctx.font = `900 ${fontSize}px 'Lato', sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    // Set text color (pure white, no transparency)
+                    ctx.fillStyle = 'rgba(255, 255, 255, 1.0)';
+
+                    // Calculate position based on slider percentages
+                    const x = (canvas.width * textXPercent) / 100;
+                    const y = (canvas.height * textYPercent) / 100;
+
+                    // Handle multi-line text
+                    const lines = text.split('\n');
+                    const lineHeight = fontSize * 1.1;
+                    const startY = y - (lines.length - 1) * lineHeight / 2;
+
+                    lines.forEach((line, index) => {
+                        ctx.fillText(line, x, startY + index * lineHeight);
+                    });
+                }
+
+                // Step 3: Composite the foreground (subject) on top with proper alpha blending
+                const processedCtx = this.processedCanvas.getContext('2d');
+                const processedImageData = processedCtx.getImageData(0, 0, canvas.width, canvas.height);
+                
+                // Use globalCompositeOperation for better blending
+                ctx.globalCompositeOperation = 'source-over';
+                
+                // Create a temporary canvas for the foreground with proper alpha
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.putImageData(processedImageData, 0, 0);
+                
+                // Draw the foreground with proper alpha compositing
+                ctx.drawImage(tempCanvas, 0, 0);
+
+                // Update the displayed image and store the canvas
+                this.compositedImage.src = canvas.toDataURL('image/png');
+                this.compositedCanvas = canvas;
             }
 
             showProgress(text, percent = 0) {
