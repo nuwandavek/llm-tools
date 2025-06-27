@@ -59,11 +59,52 @@
             font-size: 16px;
         }
 
+        .examples-section {
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            color: #c0392b;
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .examples-grid {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .example-item {
+            border-radius: 6px;
+            overflow: hidden;
+            flex: 0 0 auto;
+            max-height: 200px;
+            max-width: 200px;
+        }
+
+        .example-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 6px;
+            transition: transform 0.2s ease;
+        }
+
+        .example-image:hover {
+            transform: scale(1.02);
+        }
+
         .upload-section {
             background-color: #2a2a2a;
             border-radius: 8px;
             padding: 30px;
-            margin-bottom: 30px;
             text-align: center;
         }
 
@@ -131,6 +172,13 @@
         .btn:disabled {
             background-color: #555;
             cursor: not-allowed;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
         .progress-section {
@@ -305,6 +353,18 @@
         }
 
         @media (max-width: 768px) {
+            .examples-grid {
+                overflow-x: auto;
+                justify-content: flex-start;
+                gap: 10px;
+                padding-bottom: 10px;
+            }
+
+            .example-item {
+                flex: 0 0 150px;
+                max-width: 150px;
+            }
+
             .image-comparison {
                 grid-template-columns: 1fr;
             }
@@ -328,15 +388,36 @@
             Separate backgrounds from foreground subjects and add custom text overlays that appear behind the subject
         </div>
 
+        <div class="examples-section">
+            <h3 class="section-title">Examples</h3>
+            <div class="examples-grid">
+                <div class="example-item">
+                    <img src="../assets/kiwi1.png" alt="Example 1" class="example-image">
+                </div>
+                <div class="example-item">
+                    <img src="../assets/kiwi2.png" alt="Example 2" class="example-image">
+                </div>
+                <div class="example-item">
+                    <img src="../assets/kiwi3.png" alt="Example 3" class="example-image">
+                </div>
+                <div class="example-item">
+                    <img src="../assets/kiwi4.png" alt="Example 4" class="example-image">
+                </div>
+            </div>
+        </div>
+
         <div class="upload-section">
             <div class="upload-area disabled" id="uploadArea">
                 <div class="upload-icon">📷</div>
                 <div class="upload-text" id="uploadText">
-                    Loading model... Please wait
+                    Click "Load Model" to get started
                 </div>
             </div>
             <input type="file" id="fileInput" class="file-input" accept="image/*">
-            <button class="btn" id="processBtn" disabled>Remove Background</button>
+            <div class="button-row">
+                <button class="btn" id="loadModelBtn">Load Model</button>
+                <button class="btn" id="processBtn" disabled>Remove Background</button>
+            </div>
         </div>
 
         <div class="progress-section" id="progressSection">
@@ -400,13 +481,13 @@
                 this.updateTimeout = null; // For debouncing
                 this.initializeElements();
                 this.setupEventListeners();
-                this.loadModel();
             }
 
             initializeElements() {
                 this.uploadArea = document.getElementById('uploadArea');
                 this.uploadText = document.getElementById('uploadText');
                 this.fileInput = document.getElementById('fileInput');
+                this.loadModelBtn = document.getElementById('loadModelBtn');
                 this.processBtn = document.getElementById('processBtn');
                 this.progressSection = document.getElementById('progressSection');
                 this.progressFill = document.getElementById('progressFill');
@@ -435,6 +516,9 @@
 
                 // File input
                 this.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+
+                // Load model button
+                this.loadModelBtn.addEventListener('click', this.loadModel.bind(this));
 
                 // Process button
                 this.processBtn.addEventListener('click', this.processImage.bind(this));
@@ -507,6 +591,10 @@
             async loadModel() {
                 if (this.isModelLoaded) return;
 
+                // Disable load model button
+                this.loadModelBtn.disabled = true;
+                this.loadModelBtn.textContent = 'Loading...';
+
                 // Check if model is cached
                 const modelCached = await this.checkModelCache();
                 
@@ -554,7 +642,8 @@
                     this.isModelLoaded = true;
                     this.updateProgress(100, 'Model ready!');
                     
-                    // Enable upload area
+                    // Hide load model button and enable upload area
+                    this.loadModelBtn.style.display = 'none';
                     this.uploadArea.classList.remove('disabled');
                     this.uploadText.textContent = 'Drop an image here or click to select';
                     
@@ -566,6 +655,10 @@
                 } catch (error) {
                     console.error('Error loading model:', error);
                     this.updateProgress(0, 'Error loading model. Please try again.');
+                    
+                    // Re-enable load model button
+                    this.loadModelBtn.disabled = false;
+                    this.loadModelBtn.textContent = 'Load Model';
                 }
             }
 
