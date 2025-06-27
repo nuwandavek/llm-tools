@@ -21,6 +21,9 @@ Render and explore JSON data.
 ### 3. [`/timezones`](https://vivekaithal.co/llm-tools/tool/timezones)
 Visualize current time across different timezones.
 
+### 4. [`/bg-text`](https://vivekaithal.co/llm-tools/tool/bg-text)
+Separate backgrounds from subjects and add custom text overlays behind the foreground.
+
 ---
 
 Made with ❤️ by [nuwandavek](https://github.com/nuwandavek)
